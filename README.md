@@ -3,6 +3,12 @@
 Load configuration from either `CONFIG` environment variable or `config.toml`.
 Simple, strict.
 
+## Import
+
+```go
+import "github.com/nixberg/xonfig-go/v2"
+```
+
 ## Example
 
 ```go
