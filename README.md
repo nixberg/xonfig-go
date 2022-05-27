@@ -1,32 +1,48 @@
-# xonfig
+# xonfig-go v2
 
-Load configuration from environment variables. Simple, strict.
+Load configuration from either `CONFIG` environment variable or `config.toml`.
+Simple, strict.
 
 ## Example
 
-```Go
+```go
 package main
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/joho/godotenv/autoload"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/nixberg/xonfig-go"
+	"github.com/nixberg/xonfig-go/v2"
 )
 
 func main() {
-	var config struct {
-		DatabasePath  string `env:"DATABASE_PATH"`
-		GinMode       string `env:"GIN_MODE"`
-		ListenAddress string `env:"LISTEN_ADDRESS"`
-	}
-	xonfig.MustLoad(&config)
+	config := xonfig.MustLoad[struct {
+		GinMode         string
+		ListenAddress   string
+		TrustedPlatform string
 
-	db, err := sql.Open("sqlite3", config.DatabasePath)
+		Accounts gin.Accounts
+	}]()
 
-	gin.SetMode(config.GinMode)
-	router := gin.Default()
-
-	router.Run(config.ListenAddress)
+	...
 }
-``` 
+```
+
+Contents of `./config.toml`:
+
+```toml
+GinMode = "debug"
+ListenAddress = "localhost:8080"
+TrustedPlatform = ""
+
+Accounts = {}
+```
+
+Contents of `CONFIG` environment variable:
+
+```toml
+GinMode = "release"
+ListenAddress = "0.0.0.0:8080"
+TrustedPlatform = "CF-Connecting-IP"
+
+[Accounts]
+admin = "8mwf9mrtbu2z2zhbec7qg6kc63"
+```
