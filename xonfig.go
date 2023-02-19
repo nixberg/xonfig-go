@@ -24,8 +24,7 @@ func MustLoad[Config any]() Config {
 	decoder.DisallowUnknownFields()
 
 	var config Config
-	err := decoder.Decode(&config)
-	if err != nil {
+	if err := decoder.Decode(&config); err != nil {
 		panic(fmt.Errorf("xonfig: %w", err))
 	}
 
