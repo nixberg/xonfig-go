@@ -24,6 +24,16 @@ func MustLoad[Config any]() (config Config) {
 	return config
 }
 
+func MustLoadOr[Config any](config Config) Config {
+	configString, present := os.LookupEnv("CONFIG")
+
+	if present {
+		mustDecode(&config, []byte(configString))
+	}
+
+	return config
+}
+
 func mustDecode[Config any](config *Config, configBytes []byte) {
 	decoder := toml.NewDecoder(bytes.NewReader(configBytes))
 	decoder.DisallowUnknownFields()

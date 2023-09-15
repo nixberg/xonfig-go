@@ -36,6 +36,41 @@ func TestMustLoad(t *testing.T) {
 	}
 }
 
+func TestMustLoadOr(t *testing.T) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			t.Errorf("unexpected error: \"%v\"", err)
+		}
+	}()
+
+	os.Setenv("CONFIG", `
+		a = "env"
+	`)
+
+	e := MustLoadOr(struct {
+		A string
+	}{
+		A: "default",
+	})
+
+	if e.A != "env" {
+		t.Fail()
+	}
+
+	os.Unsetenv("CONFIG")
+
+	d := MustLoadOr(struct {
+		A string
+	}{
+		A: "default",
+	})
+
+	if d.A != "default" {
+		t.Fail()
+	}
+}
+
 func TestMissingField(t *testing.T) {
 	defer func() {
 		err := recover().(error)
