@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestItWorks(t *testing.T) {
+func TestMustLoad(t *testing.T) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -13,51 +13,38 @@ func TestItWorks(t *testing.T) {
 		}
 	}()
 
-	value := MustLoad[struct {
+	os.Setenv("CONFIG", `
+		a = "env"
+	`)
+
+	e := MustLoad[struct {
 		A string
-		B string
 	}]()
 
-	if value.A != "it" || value.B != "works" {
+	if e.A != "env" {
 		t.Fail()
 	}
-}
 
-func TestItWorksEnv(t *testing.T) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			t.Errorf("unexpected error: \"%v\"", err)
-		}
-	}()
+	os.Unsetenv("CONFIG")
 
-	os.Setenv("CONFIG", `c = "also works"`)
-
-	value := MustLoad[struct {
-		C string
+	f := MustLoad[struct {
+		A string
 	}]()
 
-	if value.C != "also works" {
+	if f.A != "file" {
 		t.Fail()
 	}
 }
 
 func TestMissingField(t *testing.T) {
-	assertPanics(t, func() {
-		MustLoad[struct {
-			A string
-		}]()
-	}, "xonfig: strict mode: fields in the document are missing in the target struct")
-}
-
-func assertPanics(t *testing.T, f func(), expected string) {
 	defer func() {
 		err := recover().(error)
 		if err == nil {
 			t.Fail()
-		} else if err.Error() != expected {
+		} else if err.Error() !=
+			"xonfig: strict mode: fields in the document are missing in the target struct" {
 			t.Logf("unexpected error: \"%v\"", err)
 		}
 	}()
-	f()
+	MustLoad[struct{}]()
 }
