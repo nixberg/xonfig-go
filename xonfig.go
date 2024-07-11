@@ -1,44 +1,42 @@
 package xonfig
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
 	"os"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
-func MustLoad[Config any]() (config Config) {
-	configString, present := os.LookupEnv("CONFIG")
+var (
+	ErrMissingEnv    = errors.New("XONFIG environment variable not present")
+	ErrEmptyEnv      = errors.New("XONFIG environment variable contains only white space")
+	ErrInvalidConfig = errors.New("invalid config")
+)
 
-	if present {
-		mustDecode(&config, []byte(configString))
-	} else {
-		configBytes, err := os.ReadFile("config.toml")
-		if err != nil {
-			panic(fmt.Errorf("xonfig: %w", err))
-		}
-		mustDecode(&config, configBytes)
+func load[Config any]() (Config, error) {
+	var config Config
+	configString, present := os.LookupEnv("XONFIG")
+
+	if !present {
+		return config, ErrMissingEnv
+	} else if strings.TrimSpace(configString) == "" {
+		return config, ErrEmptyEnv
 	}
 
-	return config
-}
-
-func MustLoadOr[Config any](config Config) Config {
-	configString, present := os.LookupEnv("CONFIG")
-
-	if present {
-		mustDecode(&config, []byte(configString))
-	}
-
-	return config
-}
-
-func mustDecode[Config any](config *Config, configBytes []byte) {
-	decoder := toml.NewDecoder(bytes.NewReader(configBytes))
+	decoder := toml.NewDecoder(strings.NewReader(configString))
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(&config); err != nil {
-		panic(fmt.Errorf("xonfig: %w", err))
+		return config, errors.Join(ErrInvalidConfig, err)
 	}
+	return config, nil
+}
+
+func MustLoad[Config any]() Config {
+	config, err := load[Config]()
+	if err != nil {
+		panic(err)
+	}
+	return config
 }

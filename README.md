@@ -1,13 +1,7 @@
-# xonfig-go v2
+# xonfig-go v3
 
-Load configuration from either `CONFIG` environment variable or `config.toml`.
+Load configuration from `XONFIG` environment variable.
 Simple, strict.
-
-## Import
-
-```go
-import "github.com/nixberg/xonfig-go/v2"
-```
 
 ## Example
 
@@ -16,7 +10,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/nixberg/xonfig-go/v2"
+	"github.com/nixberg/xonfig-go/v3"
 )
 
 func main() {
@@ -28,21 +22,11 @@ func main() {
 		Accounts gin.Accounts
 	}]()
 
-	...
+	// ...
 }
 ```
 
-Contents of `./config.toml`:
-
-```toml
-GinMode = "debug"
-ListenAddress = "localhost:8080"
-TrustedPlatform = ""
-
-Accounts = {}
-```
-
-Contents of `CONFIG` environment variable:
+Contents of `XONFIG` environment variable:
 
 ```toml
 GinMode = "release"

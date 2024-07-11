@@ -1,85 +1,67 @@
 package xonfig
 
 import (
+	"errors"
 	"os"
 	"testing"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
-func TestMustLoad(t *testing.T) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			t.Errorf("unexpected error: \"%v\"", err)
-		}
-	}()
+type Config struct {
+	A string
+}
 
-	os.Setenv("CONFIG", `
+func TestLoad(t *testing.T) {
+	os.Setenv("XONFIG", `
 		a = "env"
 	`)
 
-	e := MustLoad[struct {
-		A string
-	}]()
+	config, err := load[Config]()
 
-	if e.A != "env" {
+	if err != nil {
 		t.Fail()
 	}
 
-	os.Unsetenv("CONFIG")
-
-	f := MustLoad[struct {
-		A string
-	}]()
-
-	if f.A != "file" {
+	if config.A != "env" {
 		t.Fail()
 	}
 }
 
-func TestMustLoadOr(t *testing.T) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			t.Errorf("unexpected error: \"%v\"", err)
-		}
-	}()
+func TestMissingEnv(t *testing.T) {
+	os.Unsetenv("XONFIG")
 
-	os.Setenv("CONFIG", `
-		a = "env"
-	`)
+	_, err := load[Config]()
 
-	e := MustLoadOr(struct {
-		A string
-	}{
-		A: "default",
-	})
-
-	if e.A != "env" {
+	if !errors.Is(err, ErrMissingEnv) {
 		t.Fail()
 	}
+}
 
-	os.Unsetenv("CONFIG")
+func TestEmptyEnv(t *testing.T) {
+	os.Setenv("XONFIG", " \t\n")
 
-	d := MustLoadOr(struct {
-		A string
-	}{
-		A: "default",
-	})
+	_, err := load[Config]()
 
-	if d.A != "default" {
+	if !errors.Is(err, ErrEmptyEnv) {
 		t.Fail()
 	}
 }
 
 func TestMissingField(t *testing.T) {
-	defer func() {
-		err := recover().(error)
-		if err == nil {
-			t.Fail()
-		} else if err.Error() !=
-			"xonfig: strict mode: fields in the document are missing in the target struct" {
-			t.Logf("unexpected error: \"%v\"", err)
-		}
-	}()
-	MustLoad[struct{}]()
+	os.Setenv("XONFIG", `
+		a = "env"
+		b = "cat"
+	`)
+
+	_, err := load[Config]()
+
+	if !errors.Is(err, ErrInvalidConfig) {
+		t.Fail()
+	}
+
+	var strictMissingError *toml.StrictMissingError
+	if !errors.As(err, &strictMissingError) {
+		t.Fail()
+	}
 }

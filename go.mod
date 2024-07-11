@@ -1,5 +1,5 @@
-module github.com/nixberg/xonfig-go/v2
+module github.com/nixberg/xonfig-go/v3
 
-go 1.18
+go 1.22
 
-require github.com/pelletier/go-toml/v2 v2.1.0
+require github.com/pelletier/go-toml/v2 v2.2.2
